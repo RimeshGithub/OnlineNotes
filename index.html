@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+
+    <head><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css">
+        <title>ChatApp</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="manifest" href="manifest.json">
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Cabin:wght@400;500;600;700&family=Calistoga&display=swap" rel="stylesheet">
+		<link rel="stylesheet" href="index.css">
+    </head>
+
+    <body>
+        <section id="logged-out-view">
+            <div>
+                <h1 class="app-title">ChatApp</h1>
+                
+                <div class="provider-buttons">
+                    <button id="sign-in-with-google-btn" class="provider-btn">
+                        <img src="assets/providers/google.png" class="google-btn-logo">
+                        Sign in with Google
+                    </button>
+                </div>
+                
+                <div class="auth-fields-and-buttons">
+                    <input id="email-input" type="email" placeholder="Email">
+                    <input id="password-input" type="password" placeholder="Password">
+                    
+                    <button id="sign-in-btn" class="primary-btn">Sign in</button>
+                    <button id="create-account-btn" class="secondary-btn">Create Account</button>
+                </div>
+            </div>
+        </section>
+        
+        <section id="logged-in-view">
+            <div>
+                <nav id="logged-in-nav">
+                    <img id="user-profile-picture">
+                    <h2 id="user-greeting"></h2>
+                    
+                    <div id="button-group">
+                    <button id="chatter-btn" title="View Chatters">
+                        <img src="assets/icons/chattericon.png" class="icon-img-btn">
+                    </button>
+                    <button id="sign-out-btn" title="Sign out">
+                        <img src="assets/icons/icon-sign-out.svg" class="icon-img-btn">
+                    </button>
+                    </div>
+                </nav>
+                
+                <div class="app-container">
+                    <div id="posts" class="posts-section">
+                    </div>
+                    
+                    <div class="post-section">
+                        <textarea id="post-input" placeholder="Message..."></textarea>
+                        <button id="post-btn" class="primary-btn">Send</button>
+                    </div>
+                    <div id="scroll-bottom-btn"><img src="assets/icons/scrolldown.png"></div>
+                </div>
+                
+                <div id="chatter-box">
+                    <h1>Chatters</h1>
+                    <div id="chatter-list">
+                    </div>
+                    <button id="chatter-close-btn" class="primary-btn">Close</button>
+                </div>
+            </div>
+        </section>
+        
+        <script src="index.js" type="module"></script>
+    </body>
+
+</html>
