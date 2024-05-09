@@ -2,7 +2,7 @@
 <html>
 
     <head><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css">
-        <title>ChatApp</title>
+        <title>Online Notes</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="manifest" href="manifest.json">
 		<link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,7 +14,7 @@
     <body>
         <section id="logged-out-view">
             <div>
-                <h1 class="app-title">ChatApp</h1>
+                <h1 class="app-title">Online Notes</h1>
                 
                 <div class="provider-buttons">
                     <button id="sign-in-with-google-btn" class="provider-btn">
@@ -49,23 +49,9 @@
                     </div>
                 </nav>
                 
-                <div class="app-container">
-                    <div id="posts" class="posts-section">
-                    </div>
-                    
-                    <div class="post-section">
-                        <textarea id="post-input" placeholder="Message..."></textarea>
-                        <button id="post-btn" class="primary-btn">Send</button>
-                    </div>
-                    <div id="scroll-bottom-btn"><img src="assets/icons/scrolldown.png"></div>
+                <div id="app-container">
                 </div>
                 
-                <div id="chatter-box">
-                    <h1>Chatters</h1>
-                    <div id="chatter-list">
-                    </div>
-                    <button id="chatter-close-btn" class="primary-btn">Close</button>
-                </div>
             </div>
         </section>
         

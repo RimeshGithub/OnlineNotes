@@ -56,17 +56,7 @@ const signOutButtonEl = document.getElementById("sign-out-btn")
 const userProfilePictureEl = document.getElementById("user-profile-picture")
 const userGreetingEl = document.getElementById("user-greeting")
 
-const textareaEl = document.getElementById("post-input")
-const postButtonEl = document.getElementById("post-btn")
-
-const postsEl = document.getElementById("posts")
-
-const scrollButton = document.getElementById("scroll-bottom-btn")
-
-const chatterButton = document.getElementById("chatter-btn")
-const chatterBox = document.getElementById("chatter-box")
-const chatterListBox = document.getElementById("chatter-list")
-const chatterCloseButton = document.getElementById("chatter-close-btn")
+const appEl = document.getElementById("app-container")
 
 /* == UI - Event Listeners == */
 
@@ -78,16 +68,8 @@ createAccountButtonEl.addEventListener("click", authCreateAccountWithEmail)
 
 signOutButtonEl.addEventListener("click", authSignOut)
 
-postButtonEl.addEventListener("click", postButtonPressed)
-
-scrollButton.addEventListener("click", scrollToBottom)
-
-chatterButton.addEventListener("click", viewChattersList)
-chatterCloseButton.addEventListener("click", closeChattersList)
-
-const collectionName = "messages"
-let chatterList = []
-let updatedChatterList = []
+const collectionName = "notes"
+let renderCount = 0
 
 onAuthStateChanged(auth, (user) => {
     if (user) {
@@ -95,11 +77,6 @@ onAuthStateChanged(auth, (user) => {
         showProfilePicture(userProfilePictureEl, user)
         showUserGreeting(userGreetingEl, user)
         fetchAllPosts(user)   
-        closeChattersList()
-        
-        setTimeout(() => {
-            scrollToBottom()
-        }, 1500)
         
     } else {
         showLoggedOutView()
@@ -161,155 +138,134 @@ function authSignOut() {
 
 /* = Functions - Firebase - Cloud Firestore = */
 
-async function addPostToDB(postBody, user) {
+async function addNoteToDB(user) {
     try {
         const docRef = await addDoc(collection(db, collectionName), {
-            userName: user.displayName ? user.displayName : localStorage.getItem("unknownUser"),
             uid: user.uid,
-            profilePic: user.photoURL,
-            body: postBody,
+            body: "",
             createdAt: serverTimestamp()
         })
         console.log("Document written with ID: ", docRef.id)
-        scrollToBottom()
+
     } catch (error) {
         console.error(error.message)
         alert(error.message)
     }
 }
 
-async function updatePostInDB(docId, newBody) {
-    const postRef = doc(db, collectionName, docId);
+async function updateNoteInDB(docId, newBody) {
+    const noteRef = doc(db, collectionName, docId);
 
-    await updateDoc(postRef, {
+    await updateDoc(noteRef, {
         body: newBody
     })
 }
 
-async function deletePostFromDB(docId) {
+async function deleteNoteFromDB(docId) {
     await deleteDoc(doc(db, collectionName, docId))
 }
 
 function fetchInRealtimeAndRenderPostsFromDB(query, user) {
     onSnapshot(query, (querySnapshot) => {
-        clearAll(postsEl)
+        clearAll(appEl)
+        let notesSize = querySnapshot.size
+        
+        if(notesSize == 0)
+           createAddButton()
         
         querySnapshot.forEach((doc) => {
-            renderPost(postsEl, doc, user)
-            updateChatterList(doc.data())
+            renderPost(appEl, doc, user, notesSize)
         })
     })
 }
 
 function fetchAllPosts(user) {
-    const postsRef = collection(db, collectionName)
+    const noteRef = collection(db, collectionName)
     
-    const q = query(postsRef, orderBy("createdAt", "asc"))
+    const q = query(noteRef, orderBy("createdAt", "asc"))
 
     fetchInRealtimeAndRenderPostsFromDB(q, user)
 }
 
 /* == Functions - UI Functions == */
 
-function createPostHeader(postData) {
+function createTimeHeader(noteData) {
     const headerDiv = document.createElement("div")
-    headerDiv.className = "header"
+    headerDiv.className = "timeheader"
     
-        const profilePicture = document.createElement("img")
-        profilePicture.className = "ppDisplay"
-        if(postData.profilePic)
-           profilePicture.src = postData.profilePic
-        else
-           profilePicture.src = "assets/images/default.jpeg"
-        headerDiv.appendChild(profilePicture)
-        
-        const headerName = document.createElement("h3")
-        headerName.textContent = postData.userName
+        const timeData = document.createElement("p")
+        timeData.textContent = displayDate(noteData.createdAt)
 
-        headerDiv.appendChild(headerName)
-        
-        const headerDate = document.createElement("h4")
-        headerDate.textContent = displayDate(postData.createdAt)
-        headerDiv.appendChild(headerDate)
+        headerDiv.appendChild(timeData)
         
     return headerDiv
 }
 
-function createPostBody(postData) {
-    const postBody = document.createElement("p")
-    postBody.innerHTML = replaceNewlinesWithBrTags(postData.body)
+function createNoteBody(wholeDoc) {
+    const noteData = wholeDoc.data()
+    const noteId = wholeDoc.id
+    const noteBody = document.createElement("textarea")
     
-    return postBody
-}
-
-function createPostUpdateButton(wholeDoc) {
-    const postId = wholeDoc.id
-    const postData = wholeDoc.data()
+    noteBody.className = "noteBody"
+    noteBody.placeholder = "Enter your notes"
+    noteBody.value = noteBody.body? noteData.body : ""
     
-    const button = document.createElement("button")
-    button.textContent = "Edit"
-    button.addEventListener("click", function() {
-        const newBody = prompt("Edit the message:", postData.body)
-        
-        if (newBody) {
-            updatePostInDB(postId, newBody)
-        }
+    noteBody.addEventListener('input', ()=>{
+         updateNoteInDB(noteId, noteBody.value)
     })
     
-    return button
+    return noteBody
 }
 
-function createPostDeleteButton(wholeDoc) {
-    const postId = wholeDoc.id
+function createDeleteNoteButton(wholeDoc) {
+    const noteId = wholeDoc.id
     
     const button = document.createElement('button')
     button.textContent = 'Delete'
     button.addEventListener('click', function() {
-        const confirmation = confirm("Do you want to delete this message?")
+        const confirmation = confirm("Do you want to delete this note?")
         
         if(confirmation)
-            deletePostFromDB(postId)
+            deleteNoteFromDB(noteId)
     })
     return button
 }
 
-function createPostFooter(wholeDoc) {
-    const footerDiv = document.createElement("div")
-    footerDiv.className = "footer"
+function createAddButton()
+{
+    const addButton = document.createElement("button")
+    addButton.className = "btn-add"
+    addButton.textContent = "+Add Note"
     
-    footerDiv.appendChild(createPostUpdateButton(wholeDoc))
-    footerDiv.appendChild(createPostDeleteButton(wholeDoc))
+    addButton.addEventListener('click', addButtonPressed)
     
-    return footerDiv
+    appEl.appendChild(addButton)
 }
 
-function renderPost(postsEl, wholeDoc, user) {
-    const postData = wholeDoc.data()
+function renderPost(appEl, wholeDoc, user, notesSize) {
+    const noteData = wholeDoc.data()
     
-    const postDiv = document.createElement("div")
-    postData.uid == user.uid ? postDiv.className = "post" : postDiv.className = "post2"
+    const noteDiv = document.createElement("div")
+    noteDiv.className = "noteDiv"
     
-    postDiv.appendChild(createPostHeader(postData))
-    postDiv.appendChild(createPostBody(postData))
+    if(noteData.uid == user.uid){
+       noteDiv.appendChild(createTimeHeader(noteData))
+       noteDiv.appendChild(createNoteBody(wholeDoc))
+       noteDiv.appendChild(createDeleteNoteButton(wholeDoc))
     
-    if(postData.uid == user.uid)
-       postDiv.appendChild(createPostFooter(wholeDoc))
-    
-    postsEl.appendChild(postDiv)
-}
-
-function replaceNewlinesWithBrTags(inputString) {
-    return inputString.replace(/\n/g, "<br>")
-}
-
-function postButtonPressed() {
-    const postBody = textareaEl.value
-    const user = auth.currentUser
-    
-    if (postBody) {
-        addPostToDB(postBody, user)
-        clearInputField(textareaEl)
+       appEl.appendChild(noteDiv)
+       renderCount++
     }
+    
+    if(renderCount == notesSize){
+       renderCount = 0
+       createAddButton()  
+     } 
+}
+
+function addButtonPressed() {
+    const user = auth.currentUser
+    addNoteToDB(user)
 }
 
 function showProfilePicture(imgElement, user) {
@@ -351,64 +307,6 @@ function displayDate(firebaseDate) {
     minutes = minutes < 10 ? "0" + minutes : minutes
 
     return `${day} ${month} ${year} - ${hours}:${minutes}`
-}
-
-function scrollToBottom(){
-  postsEl.scrollTo({
-            left: 0,
-            top: postsEl.scrollHeight,
-            behavior: 'smooth'
-           })
-}
-
-postsEl.addEventListener("scroll", () => {
-    if(isScrolledToBottom(postsEl))
-      scrollButton.style.display = "none"
-    else 
-      scrollButton.style.display = "block"
-})
-
-function isScrolledToBottom(element) {
-    // Calculate the current scroll position
-    const scrollPosition = element.scrollTop + element.clientHeight
-
-    // Check if the element is scrolled to the bottom with a small tolerance for rounding errors
-    return Math.abs(scrollPosition - element.scrollHeight) < 1
-}
-
-function updateChatterList(postData){
-    let profilePic = postData.profilePic ? postData.profilePic : "assets/images/default.jpeg"
-    
-    chatterList.push({name: postData.userName , profilePic: profilePic , uid: postData.uid})
-    
-    //removes duplicate objects
-    const uniqueByUid = new Map(chatterList.map(item => [item.uid, item]))
-
-    updatedChatterList = [...uniqueByUid.values()]
-}
-
-function viewChattersList(){
-    showView(chatterBox)
-    clearAll(chatterListBox)
-    
-    updatedChatterList.map((chatter) => {
-        const chatterDiv = document.createElement("div")
-        chatterDiv.className = "chatter-div"
-        
-        const chatterProfilePic = document.createElement("img")
-            chatterProfilePic.src = chatter.profilePic
-            
-        const chatterName = document.createElement("h2")
-            chatterName.textContent = chatter.name
-         
-        chatterDiv.appendChild(chatterProfilePic)         
-        chatterDiv.appendChild(chatterName)
-        chatterListBox.appendChild(chatterDiv)
-    })
-}
-
-function closeChattersList(){
-    hideView(chatterBox)
 }
 
 function clearAll(element) {
