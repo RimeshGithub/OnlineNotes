@@ -1,6 +1,6 @@
 /* General Body and Background Styles */
 body {
-    font-family: 'Cabin', sans-serif;
+    font-family: "Indie Flower", cursive;
     background-color: #f4f4f9;
     color: #333;
     margin: 0;
@@ -27,10 +27,11 @@ body {
 #app-container{
     display: grid;
     position: absolute;
+    justify-content: center;
     box-sizing: border-box;
     top: 70px;
     left: 0;
-    grid-template-columns: repeat(auto-fill,200px);
+    grid-template-columns: repeat(auto-fill, 300px);
     gap: 50px;
     padding: 40px;
     height: calc(100% - 70px);
@@ -40,7 +41,6 @@ body {
 
 /* Headers */
 .app-title {
-    font-family: 'Calistoga', cursive;
     color: #5C5;
     text-align: center;
 }
@@ -77,7 +77,7 @@ button {
 }
 
 .btn-add{
-  height: 200px;
+  height: 300px;
   border: none;
   outline: none;
   color: #fff;
@@ -107,9 +107,39 @@ nav {
     padding: 10px;
 }
 
-textarea {
+.noteBody {
     resize: none;
     margin: 0;
+    outline: none;
+    border: none;
+    height: 240px;
+    background: transparent;
+}
+
+.noteBody::-webkit-scrollbar{
+    display: none;
+}
+
+.timeheader{
+    font-size: 16px
+}
+
+.deletebutton{
+    background: transparent;
+    padding: 0;
+    width: auto;
+    margin-left: auto;
+}
+
+.noteDiv{
+    display: flex;
+    flex-direction: column;
+    font-size: 20px;
+    height: 300px;
+    background: url('assets/images/notebg.jpg') no-repeat, yellow;
+    background-size: cover;
+    padding: 15px 20px;
+    border-radius: 10px;
 }
 
 #logged-in-nav{

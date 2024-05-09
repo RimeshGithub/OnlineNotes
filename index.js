@@ -12,6 +12,7 @@ import { getFirestore,
          addDoc,
          serverTimestamp,
          onSnapshot,
+         getDocs,
          query,
          where,
          orderBy,
@@ -52,6 +53,7 @@ const signInButtonEl = document.getElementById("sign-in-btn")
 const createAccountButtonEl = document.getElementById("create-account-btn")
 
 const signOutButtonEl = document.getElementById("sign-out-btn")
+const deleteAllButton = document.getElementById("delete-all-btn")
 
 const userProfilePictureEl = document.getElementById("user-profile-picture")
 const userGreetingEl = document.getElementById("user-greeting")
@@ -68,6 +70,8 @@ createAccountButtonEl.addEventListener("click", authCreateAccountWithEmail)
 
 signOutButtonEl.addEventListener("click", authSignOut)
 
+deleteAllButton.addEventListener("click", deleteAllNotes)
+
 const collectionName = "notes"
 let renderCount = 0
 
@@ -76,7 +80,7 @@ onAuthStateChanged(auth, (user) => {
         showLoggedInView()
         showProfilePicture(userProfilePictureEl, user)
         showUserGreeting(userGreetingEl, user)
-        fetchAllPosts(user)   
+        fetchAllNotes(user)   
         
     } else {
         showLoggedOutView()
@@ -138,6 +142,27 @@ function authSignOut() {
 
 /* = Functions - Firebase - Cloud Firestore = */
 
+async function fetchAllNotes(user) {
+    const noteRef = collection(db, collectionName)  
+    const q = query(noteRef, orderBy("createdAt", "asc"), where("uid" , "==" , user.uid))
+    const querySnapshot = await getDocs(q)
+    let notesSize = querySnapshot.size
+    
+    clearAll(appEl)
+
+    if(notesSize == 0)
+        createAddButton()
+
+     querySnapshot.docs.map(doc => {
+             renderPost(appEl, doc, user, notesSize)
+    })
+}
+
+function addButtonPressed() {
+    const user = auth.currentUser
+    addNoteToDB(user)
+}
+
 async function addNoteToDB(user) {
     try {
         const docRef = await addDoc(collection(db, collectionName), {
@@ -146,6 +171,7 @@ async function addNoteToDB(user) {
             createdAt: serverTimestamp()
         })
         console.log("Document written with ID: ", docRef.id)
+        fetchAllNotes(user)   
 
     } catch (error) {
         console.error(error.message)
@@ -162,29 +188,9 @@ async function updateNoteInDB(docId, newBody) {
 }
 
 async function deleteNoteFromDB(docId) {
+    const user = auth.currentUser
     await deleteDoc(doc(db, collectionName, docId))
-}
-
-function fetchInRealtimeAndRenderPostsFromDB(query, user) {
-    onSnapshot(query, (querySnapshot) => {
-        clearAll(appEl)
-        let notesSize = querySnapshot.size
-        
-        if(notesSize == 0)
-           createAddButton()
-        
-        querySnapshot.forEach((doc) => {
-            renderPost(appEl, doc, user, notesSize)
-        })
-    })
-}
-
-function fetchAllPosts(user) {
-    const noteRef = collection(db, collectionName)
-    
-    const q = query(noteRef, orderBy("createdAt", "asc"))
-
-    fetchInRealtimeAndRenderPostsFromDB(q, user)
+    fetchAllNotes(user)   
 }
 
 /* == Functions - UI Functions == */
@@ -208,7 +214,7 @@ function createNoteBody(wholeDoc) {
     
     noteBody.className = "noteBody"
     noteBody.placeholder = "Enter your notes"
-    noteBody.value = noteBody.body? noteData.body : ""
+    noteBody.value = noteData.body? noteData.body : ""
     
     noteBody.addEventListener('input', ()=>{
          updateNoteInDB(noteId, noteBody.value)
@@ -222,10 +228,12 @@ function createDeleteNoteButton(wholeDoc) {
     
     const button = document.createElement('button')
     button.textContent = 'Delete'
+    button.className = 'deletebutton'
+    
     button.addEventListener('click', function() {
-        const confirmation = confirm("Do you want to delete this note?")
+        const deleteConfirm = confirm("Do you want to delete this note?")
         
-        if(confirmation)
+        if(deleteConfirm)
             deleteNoteFromDB(noteId)
     })
     return button
@@ -240,6 +248,24 @@ function createAddButton()
     addButton.addEventListener('click', addButtonPressed)
     
     appEl.appendChild(addButton)
+}
+
+async function deleteAllNotes(){
+    const user = auth.currentUser
+    
+    const deleteAllConfirm = confirm("Do you want to delete all notes?")
+    
+    if(deleteAllConfirm){   
+        const noteRef = collection(db, collectionName)
+        const q = query(noteRef, where("uid" , "==" , user.uid))
+        const querySnapshot = await getDocs(q)
+        
+        querySnapshot.forEach((note) => {
+            deleteDoc(doc(db, collectionName, note.id))
+        })
+        
+        fetchAllNotes(user)        
+    }
 }
 
 function renderPost(appEl, wholeDoc, user, notesSize) {
@@ -261,11 +287,6 @@ function renderPost(appEl, wholeDoc, user, notesSize) {
        renderCount = 0
        createAddButton()  
      } 
-}
-
-function addButtonPressed() {
-    const user = auth.currentUser
-    addNoteToDB(user)
 }
 
 function showProfilePicture(imgElement, user) {
@@ -290,7 +311,7 @@ function showUserGreeting(element, user) {
 
 function displayDate(firebaseDate) {
     if (!firebaseDate) {
-        return "Date processing"
+        return "Date processing..."
     }
     
     const date = firebaseDate.toDate()

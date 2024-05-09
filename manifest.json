@@ -1,9 +1,9 @@
 {
-    "name": "ChatApp",
-    "short_name": "ChatApp",
+    "name": "Online Notes",
+    "short_name": "Online Notes",
     "icons":
         [
-            {"src":"/assets/icons/chaticon.png","sizes":"192x192","type":"image/png"}
+            {"src":"/assets/icons/noteicon.jpg","sizes":"192x192","type":"image/jpg"}
         ],
     "theme_color": "#EEF0F4",
     "background_color": "#EEF0F4",
